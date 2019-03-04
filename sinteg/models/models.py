@@ -203,53 +203,104 @@ class helpdesk_ticket(models.Model):
 	contacto=fields.Char(string='Contacto')
 	descripcion=fields.Text(string='Descripción')
 	cantidad=fields.Integer(string='Cantidad')
- 
+	
+	
 	@api.model
-	def _create_apple(self):
-		inv_obj = self.env['stock.picking']
-		move_line_obj = self.env['stock.move']
-		self.ensure_one()		
-		cr = self.env.cr
-		sql ="select id from helpdesk_support where name='"+str(self.name)+"' limit 1"
-		cr.execute(sql)
-		id_ticket = cr.fetchone()
-		invoice ={
-			'partner_id': self.partner_id.id,
-			'location_id':self.location_id.id,
-			'picking_type_id':self.picking_type_id.id,
-			'location_dest_id':self.location_dest_id.id,
-			'ticket':id_ticket
-		}
-		inv_ids = inv_obj.create(invoice)
-		inv_id=inv_ids.id
-		print(inv_id)
-		if inv_id:
-			move_line={
-			'picking_id':inv_id,
-			'name':self.name,
-			'product_id':self.product_id.id,
-			'marca':  self.marca.id,
-			'modelo': self.modelo.id,
-			'sub_modelo': self.sub_modelo.id,
-			'series': self.series,
-			'observaciones': self.observaciones,
-			'picking_type_code':'outgoing',
-			'product_uom_qty': '0.00',
-			'reserved_availability': '0.00',
-			'quantity_done':'0.00',
-			'product_uom':self.product_id.uom_id.id,
-			'product_uom_id':'1',
-			'location_id':self.location_id.id,
-			'location_dest_id':self.location_dest_id.id
-			
+	def create(self, vals):
+		if vals.get('name', False):
+			if vals.get('name', 'New') != 'New':
+				vals['subject'] = vals['name']
+				vals['name'] = 'New'
+		if vals.get('name', 'New') == 'New':
+			vals['name'] = self.env['ir.sequence'].next_by_code('helpdesk.support') or 'New'
+
+
+			inv_obj = self.env['stock.picking']
+			move_line_obj = self.env['stock.move']
+			#self.ensure_one()		
+			# cr = self.env.cr
+			# sql ="select max(id) from helpdesk_support"
+			# cr.execute(sql)
+			# id_ticket = cr.fetchone()
+			# #tic=id_ticket+1
+			# id_ticket
+			ticket = vals.get("name")
+			partner = vals.get("partner_id")
+			location = vals.get("location_id")
+			picking_type = vals.get("picking_type_id")
+			location_dest = vals.get("location_dest_id")
+			v=1
+			invoice ={
+				
+			    'partner_id': partner,
+				'location_id':location,
+				'picking_type_id':picking_type,
+				'location_dest_id':location_dest,
+				#'ticket':id_ticket,
+				'ticket_dos':ticket,
+				'v':v,
+				'state':'assigned'
+
 			}
-			move_ids_without_package=move_line_obj.create(move_line)
-		
-		return invoice
+			inv_ids = inv_obj.create(invoice)
+			inv_id=inv_ids.id
 
+			name = vals.get("name")
+			product_id = vals.get("product_id")
+			marca = vals.get("marca")
+			modelo = vals.get("modelo")
+			sub_modelo = vals.get("sub_modelo")			
+			series = vals.get("series")
+			observaciones = vals.get("observaciones")
+			product_uom = vals.get("product_id")			
+			location_id = vals.get("location_id")
 
-	def create_apple(self):
-		self._create_apple()
+			location_dest_id = vals.get("location_dest_id")
+
+			if inv_id:
+				move_line={
+				'picking_id':inv_id,
+				'name':name,
+				'product_id':product_id,
+				'marca': marca,
+				'modelo': modelo,
+				'sub_modelo': sub_modelo,
+				'series': series,
+				'observaciones':observaciones,
+				'picking_type_code':'outgoing',
+				'product_uom_qty': '0.00',
+				'reserved_availability': '0.00',
+				'quantity_done':'0.00',
+				'product_uom':product_uom,
+				'product_uom_id':'1',
+				'location_id':location_id,
+				'location_dest_id':location_dest_id,
+				'state':'confirmed'
+				
+				}
+				move_ids_without_package=move_line_obj.create(move_line)
+
+	
+		# set up context used to find the lead's sales team which is needed
+		# to correctly set the default stage_id
+		context = dict(self._context or {})
+		if vals.get('type') and not self._context.get('default_type'):
+			context['default_type'] = vals.get('type')
+		if vals.get('team_id') and not self._context.get('default_team_id'):
+			context['default_team_id'] = vals.get('team_id')
+
+		if not vals.get('partner_id', False) and vals.get('email', ''):
+			partner = self.env['res.partner'].sudo().search([('email', '=', vals['email'])], limit=1)
+			if partner:
+				vals.update({'partner_id': partner.id})
+
+		if vals.get('team_id') and not vals.get('team_leader_id'):
+			vals['team_leader_id'] = self.env['support.team'].browse(vals.get('team_id')).leader_id.id
+
+		# context: no_log, because subtype already handle this
+		return super(helpdesk_ticket, self.with_context(context, mail_create_nolog=True)).create(vals)
+	
+
 
 
 	@api.model
@@ -266,11 +317,11 @@ class helpdesk_ticket(models.Model):
 			'location_id':self.location_id.id,
 			'picking_type_id':self.picking_type_id.id,
 			'location_dest_id':self.location_dest_id.id,			
-			'ticket':id_ticket
+			'ticket':id_ticket,
+			'state':'assigned'
 		}
 		inv_ids = inv_obj.create(invoice)
 		inv_id=inv_ids.id
-		print(inv_id)
 		if inv_id:
 			move_line={
 			'picking_id':inv_id,
@@ -289,7 +340,9 @@ class helpdesk_ticket(models.Model):
 			'product_uom':self.product_id.uom_id.id,
 			'product_uom_id':'1',
 			'location_id':self.location_id.id,
-			'location_dest_id':self.location_dest_id.id
+			'location_dest_id':self.location_dest_id.id,
+			'state':'confirmed'
+
 			
 			}
 			move_ids_without_package=move_line_obj.create(move_line)
@@ -313,4 +366,8 @@ class stockpicking(models.Model):
 
 
 	ticket=fields.Many2one('helpdesk.support',string='Ticket')
+	ticket_dos=fields.Char(string='Ticket')
+	v=fields.Boolean(string='valor')
+
+
 

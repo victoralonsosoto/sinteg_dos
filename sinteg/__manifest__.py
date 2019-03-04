@@ -20,7 +20,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','contacts','rma_ept','purchase'],
+    'depends': ['base','contacts','rma_ept','purchase','website_helpdesk_support_ticket'],
 
     # always loaded
     'data': [

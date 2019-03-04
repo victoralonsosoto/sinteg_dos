@@ -101,8 +101,9 @@
           <xpath expr="//field[@name='origin']" position="after"> 
 
          
-            <field name="ticket" />
-            
+            <field name="ticket" attrs="{'invisible':[('v','=',True)]}"/>
+            <field name="ticket_dos" attrs="{'invisible':[('v','=',False)]}" readonly="1"/>
+            <field name="v" invisible="1" readonly="1"/>
           </xpath>
 
 
@@ -167,7 +168,7 @@
                                                       ('tipo_ticket','=','CALIDAD'),'|',
                                                       ('tipo_ticket','=','SG')]}"
                                                       />  
-             <field name="product_id" required="1" attrs="{'invisible':['|',('tipo_ticket','=','VENTA'),'|',
+             <field name="product_id" attrs="{'invisible':['|',('tipo_ticket','=','VENTA'),'|',
                                                       ('tipo_ticket','=','CALIDAD'),'|',
                                                       ('tipo_ticket','=','SG')]}"
                                                       />                                     
@@ -244,9 +245,8 @@
 
                                                             ]}"/>
 
-            <button name="create_apple" string="Crear Entrada" type="object" class="btn-primary"/>
-             <button name="create_apple_dos" string="Crear Salida" type="object" class="btn-primary"/>
-             <button type="action" name="%(purchase.purchase_order_action_generic)d" string="compras" />
+             <button name="create_apple_dos" string="Generar Salida" type="object" class="btn-primary"/>
+             <button type="action" name="%(purchase.purchase_order_action_generic)d" string="Compras" class="btn-primary oe_read_only"/>
              </xpath>
  
         </field>
