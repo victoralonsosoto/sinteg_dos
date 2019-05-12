@@ -23,33 +23,33 @@ class HelpdeskSupport(models.Model):
         return super(HelpdeskSupport, self)._write(vals)
 
 
-    # @api.model
-    # def create(self, vals):
-    #     if vals.get('name', False):
-    #         if vals.get('name', 'New') != 'New':
-    #             vals['subject'] = vals['name']
-    #             vals['name'] = 'New'
-    #     if vals.get('name', 'New') == 'New':
-    #         vals['name'] = self.env['ir.sequence'].next_by_code('helpdesk.support') or 'New'
+    @api.model
+    def create(self, vals):
+        if vals.get('name', False):
+            if vals.get('name', 'New') != 'New':
+                vals['subject'] = vals['name']
+                vals['name'] = 'New'
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('helpdesk.support') or 'New'
         
-    #     # set up context used to find the lead's sales team which is needed
-    #     # to correctly set the default stage_id
-    #     context = dict(self._context or {})
-    #     if vals.get('type') and not self._context.get('default_type'):
-    #         context['default_type'] = vals.get('type')
-    #     if vals.get('team_id') and not self._context.get('default_team_id'):
-    #         context['default_team_id'] = vals.get('team_id')
+        # set up context used to find the lead's sales team which is needed
+        # to correctly set the default stage_id
+        context = dict(self._context or {})
+        if vals.get('type') and not self._context.get('default_type'):
+            context['default_type'] = vals.get('type')
+        if vals.get('team_id') and not self._context.get('default_team_id'):
+            context['default_team_id'] = vals.get('team_id')
 
-    #     if not vals.get('partner_id', False) and vals.get('email', ''):
-    #         partner = self.env['res.partner'].sudo().search([('email', '=', vals['email'])], limit=1)
-    #         if partner:
-    #             vals.update({'partner_id': partner.id})
+        if not vals.get('partner_id', False) and vals.get('email', ''):
+            partner = self.env['res.partner'].sudo().search([('email', '=', vals['email'])], limit=1)
+            if partner:
+                vals.update({'partner_id': partner.id})
 
-    #     if vals.get('team_id') and not vals.get('team_leader_id'):
-    #         vals['team_leader_id'] = self.env['support.team'].browse(vals.get('team_id')).leader_id.id
+        if vals.get('team_id') and not vals.get('team_leader_id'):
+            vals['team_leader_id'] = self.env['support.team'].browse(vals.get('team_id')).leader_id.id
 
-    #     # context: no_log, because subtype already handle this
-    #     return super(HelpdeskSupport, self.with_context(context, mail_create_nolog=True)).create(vals)
+        # context: no_log, because subtype already handle this
+        return super(HelpdeskSupport, self.with_context(context, mail_create_nolog=True)).create(vals)
         
 #        return super(HelpdeskSupport, self).create(vals)
     
